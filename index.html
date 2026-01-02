@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masonry Grid Pro - Smart Balance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .grid-item {
+            transition: transform 0.3s ease;
+            width: 100%;
+        }
+        
+        .grid-item:hover {
+            transform: scale(1.02);
+            z-index: 5;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Container menggunakan Flex untuk kolom */
+        .masonry-wrapper {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .masonry-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            flex: 1;
+            min-width: 0; /* Mencegah overflow pada flex child */
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <header class="bg-white shadow-sm sticky top-0 z-20 py-4 px-6 mb-8">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800">Gallery<span class="text-blue-600">Masonry</span></h1>
+            <div class="text-right">
+                <p class="text-sm font-medium text-gray-700">Algoritma Penyeimbang Otomatis</p>
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest">Urutan Berdasarkan Tinggi Kolom Terpendek</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div id="masonry-grid" class="masonry-wrapper">
+            <!-- Kolom akan dibuat secara dinamis oleh JS -->
+        </div>
+
+        <div id="loading-indicator" class="flex justify-center py-10">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+    </main>
+
+    <script>
+        const gridWrapper = document.getElementById('masonry-grid');
+        const loader = document.getElementById('loading-indicator');
+        const TOTAL_IMAGES = 100;
+        
+        // Daftar tinggi gambar yang konsisten agar posisi tidak goyang saat re-render
+        const heights = [250, 380, 200, 450, 300, 350, 220, 400, 280, 320];
+
+        function getColumnCount() {
+            const width = window.innerWidth;
+            if (width < 640) return 1;
+            if (width < 1024) return 2;
+            if (width < 1280) return 3;
+            return 4;
+        }
+
+        async function renderGallery() {
+            gridWrapper.innerHTML = '';
+            const columnCount = getColumnCount();
+            
+            // 1. Buat elemen kolom dan inisialisasi pelacak tinggi kolom
+            const columns = [];
+            const columnHeights = []; // Menyimpan total tinggi tiap kolom dalam pixel
+
+            for (let i = 0; i < columnCount; i++) {
+                const col = document.createElement('div');
+                col.className = 'masonry-column';
+                gridWrapper.appendChild(col);
+                columns.push(col);
+                columnHeights.push(0); // Awalnya semua kolom tingginya 0
+            }
+
+            // 2. Distribusikan 100 gambar dengan algoritma "Shortest Column First"
+            for (let i = 0; i < TOTAL_IMAGES; i++) {
+                const imgHeight = heights[i % heights.length];
+                
+                // Cari index kolom yang saat ini paling pendek
+                const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+                
+                const card = createCard(i + 1, imgHeight);
+                columns[shortestColumnIndex].appendChild(card);
+                
+                // Update estimasi tinggi kolom (tinggi gambar + gap 1rem/16px)
+                columnHeights[shortestColumnIndex] += imgHeight + 16;
+            }
+
+            loader.classList.add('hidden');
+        }
+
+        function createCard(index, height) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'grid-item group';
+
+            const imageUrl = `https://picsum.photos/seed/${index + 800}/400/${height}`;
+
+            wrapper.innerHTML = `
+                <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300">
+                    <div class="relative skeleton" style="height: ${height}px">
+                        <img 
+                            src="${imageUrl}" 
+                            alt="Gambar ${index}"
+                            class="w-full h-full object-cover opacity-0 transition-opacity duration-700"
+                            onload="this.classList.remove('opacity-0'); this.parentElement.classList.remove('skeleton');"
+                            loading="lazy"
+                        />
+                        <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <p class="text-white text-xs font-medium">Item #${index}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return wrapper;
+        }
+
+        // Render pertama kali
+        renderGallery();
+
+        // Re-render saat layar berubah ukuran untuk menyesuaikan kolom
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(renderGallery, 250);
+        });
+    </script>
+</body>
+</html>
