@@ -1,10 +1,15 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Masonry Grid Pro - Smart Balance</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     <style>
         .grid-item {
             transition: transform 0.3s ease;
@@ -20,6 +25,10 @@
             background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
             background-size: 200% 100%;
             animation: loading 1.5s infinite;
+        }
+
+        .dark .skeleton {
+            background: linear-gradient(90deg, #2d2d2d 25%, #3d3d3d 50%, #2d2d2d 75%);
         }
 
         @keyframes loading {
@@ -41,16 +50,29 @@
             flex: 1;
             min-width: 0; /* Mencegah overflow pada flex child */
         }
+
+        #back-to-top {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        #back-to-top:hover {
+            transform: translateY(-4px);
+        }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
 
-    <header class="bg-white shadow-sm sticky top-0 z-20 py-4 px-6 mb-8">
+    <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-20 py-4 px-6 mb-8 transition-colors duration-300">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800">Gallery<span class="text-blue-600">Masonry</span></h1>
-            <div class="text-right">
-                <p class="text-sm font-medium text-gray-700">Algoritma Penyeimbang Otomatis</p>
-                <p class="text-[10px] text-gray-400 uppercase tracking-widest">Urutan Berdasarkan Tinggi Kolom Terpendek</p>
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Waifu<span class="text-blue-600 dark:text-blue-400">Masonry</span></h1>
+            <div class="flex items-center gap-6">
+                <div class="text-right">
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Algoritma Penyeimbang Otomatis</p>
+                    <p class="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest">Urutan Berdasarkan Tinggi Kolom Terpendek</p>
+                </div>
+                <button id="theme-toggle" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors duration-200">
+                    🌙 Dark Mode
+                </button>
             </div>
         </div>
     </header>
@@ -61,17 +83,38 @@
         </div>
 
         <div id="loading-indicator" class="flex justify-center py-10">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
+        </div>
+
+        <div id="infinite-loader" class="flex justify-center py-10">
+            <div id="infinite-spinner" class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 hidden"></div>
         </div>
     </main>
 
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="fixed bottom-8 right-8 z-30 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-full p-4 shadow-lg opacity-0 pointer-events-none">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+        </svg>
+    </button>
+
     <script>
         const gridWrapper = document.getElementById('masonry-grid');
-        const loader = document.getElementById('loading-indicator');
-        const TOTAL_IMAGES = 100;
-        
-        // Daftar tinggi gambar yang konsisten agar posisi tidak goyang saat re-render
-        const heights = [250, 380, 200, 450, 300, 350, 220, 400, 280, 320];
+        const initialLoader = document.getElementById('loading-indicator');
+        const infiniteLoader = document.getElementById('infinite-loader');
+        const infiniteSpinner = document.getElementById('infinite-spinner');
+        const backToTop = document.getElementById('back-to-top');
+        const themeToggle = document.getElementById('theme-toggle');
+
+        const BATCH_SIZE = 30;
+        const API_ENDPOINT = 'https://api.waifu.pics/sfw/waifu';
+
+        let columns = [];
+        let columnHeights = [];
+        let currentColumnCount = 0;
+        let itemNumber = 1;
+        let loadedItems = []; // {card, ratio}
+        let loading = false;
 
         function getColumnCount() {
             const width = window.innerWidth;
@@ -81,57 +124,44 @@
             return 4;
         }
 
-        async function renderGallery() {
+        function initColumns() {
             gridWrapper.innerHTML = '';
-            const columnCount = getColumnCount();
-            
-            // 1. Buat elemen kolom dan inisialisasi pelacak tinggi kolom
-            const columns = [];
-            const columnHeights = []; // Menyimpan total tinggi tiap kolom dalam pixel
+            const count = getColumnCount();
+            currentColumnCount = count;
+            columns = [];
+            columnHeights = Array(count).fill(0);
 
-            for (let i = 0; i < columnCount; i++) {
+            for (let i = 0; i < count; i++) {
                 const col = document.createElement('div');
                 col.className = 'masonry-column';
                 gridWrapper.appendChild(col);
                 columns.push(col);
-                columnHeights.push(0); // Awalnya semua kolom tingginya 0
             }
-
-            // 2. Distribusikan 100 gambar dengan algoritma "Shortest Column First"
-            for (let i = 0; i < TOTAL_IMAGES; i++) {
-                const imgHeight = heights[i % heights.length];
-                
-                // Cari index kolom yang saat ini paling pendek
-                const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
-                
-                const card = createCard(i + 1, imgHeight);
-                columns[shortestColumnIndex].appendChild(card);
-                
-                // Update estimasi tinggi kolom (tinggi gambar + gap 1rem/16px)
-                columnHeights[shortestColumnIndex] += imgHeight + 16;
-            }
-
-            loader.classList.add('hidden');
         }
 
-        function createCard(index, height) {
+        function getCurrentColumnWidth() {
+            if (columns.length === 0) return 400;
+            void gridWrapper.offsetHeight; // Force reflow
+            const width = columns[0].offsetWidth;
+            return width > 0 ? width : 400;
+        }
+
+        function createCard(index, imageUrl, paddingPercent) {
             const wrapper = document.createElement('div');
             wrapper.className = 'grid-item group';
 
-            const imageUrl = `https://picsum.photos/seed/${index + 800}/400/${height}`;
-
             wrapper.innerHTML = `
-                <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300">
-                    <div class="relative skeleton" style="height: ${height}px">
+                <div class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 transition-all duration-300">
+                    <div class="relative skeleton" style="padding-bottom: ${paddingPercent};">
                         <img 
                             src="${imageUrl}" 
-                            alt="Gambar ${index}"
-                            class="w-full h-full object-cover opacity-0 transition-opacity duration-700"
+                            alt="Waifu ${index}"
+                            class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700"
                             onload="this.classList.remove('opacity-0'); this.parentElement.classList.remove('skeleton');"
                             loading="lazy"
                         />
-                        <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <p class="text-white text-xs font-medium">Item #${index}</p>
+                        <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <p class="text-white text-xs font-medium">Waifu #${index}</p>
                         </div>
                     </div>
                 </div>
@@ -139,14 +169,140 @@
             return wrapper;
         }
 
-        // Render pertama kali
-        renderGallery();
+        async function loadBatch() {
+            if (loading) return;
+            loading = true;
+            infiniteSpinner.classList.remove('hidden');
 
-        // Re-render saat layar berubah ukuran untuk menyesuaikan kolom
+            const columnWidth = getCurrentColumnWidth();
+
+            // Step 1: Fetch semua URL secara paralel
+            const fetchPromises = [];
+            for (let i = 0; i < BATCH_SIZE; i++) {
+                fetchPromises.push(
+                    fetch(API_ENDPOINT)
+                        .then(res => {
+                            if (!res.ok) throw new Error('Fetch failed');
+                            return res.json();
+                        })
+                        .then(data => data.url)
+                        .catch(() => 'https://i.waifu.pics/Weau1RP.jpg') // fallback image jika error
+                );
+            }
+
+            const urls = await Promise.all(fetchPromises);
+
+            // Step 2: Preload gambar untuk mendapatkan natural dimensions secara paralel
+            const preloadPromises = urls.map(url => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.src = url;
+                    img.onload = () => {
+                        let ratio = img.naturalHeight / img.naturalWidth;
+                        if (!isFinite(ratio) || ratio <= 0) ratio = 1.5; // fallback portrait
+                        resolve({ url, ratio });
+                    };
+                    img.onerror = () => {
+                        resolve({ url, ratio: 1.5 }); // fallback ratio
+                    };
+                });
+            });
+
+            const itemsData = await Promise.all(preloadPromises);
+
+            // Step 3: Distribusikan card dengan shortest-column-first
+            itemsData.forEach(({ url, ratio }) => {
+                const displayHeight = Math.round(columnWidth * ratio);
+                const paddingPercent = (ratio * 100).toFixed(4) + '%';
+
+                const card = createCard(itemNumber++, url, paddingPercent);
+
+                const shortestIndex = columnHeights.indexOf(Math.min(...columnHeights));
+                columns[shortestIndex].appendChild(card);
+                columnHeights[shortestIndex] += displayHeight + 16;
+
+                loadedItems.push({ card, ratio });
+            });
+
+            loading = false;
+            infiniteSpinner.classList.add('hidden');
+        }
+
+        function rebalanceOnResize() {
+            const newCount = getColumnCount();
+            if (newCount === currentColumnCount) return;
+
+            initColumns();
+
+            const newColumnWidth = getCurrentColumnWidth();
+            columnHeights = Array(newCount).fill(0);
+
+            loadedItems.forEach(({ card, ratio }) => {
+                const displayHeight = Math.round(newColumnWidth * ratio);
+                const shortestIndex = columnHeights.indexOf(Math.min(...columnHeights));
+                columns[shortestIndex].appendChild(card);
+                columnHeights[shortestIndex] += displayHeight + 16;
+            });
+        }
+
+        // Theme Toggle
+        function updateThemeButton(isDark) {
+            themeToggle.innerHTML = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeButton(isDark);
+        });
+
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isDark = savedTheme === 'dark' || (savedTheme === null && prefersDark);
+
+        if (isDark) {
+            document.documentElement.classList.add('dark');
+        }
+        updateThemeButton(isDark);
+
+        // Back to Top Button
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 400) {
+                backToTop.classList.remove('opacity-0', 'pointer-events-none');
+                backToTop.classList.add('opacity-100', 'pointer-events-auto');
+            } else {
+                backToTop.classList.add('opacity-0', 'pointer-events-none');
+                backToTop.classList.remove('opacity-100', 'pointer-events-auto');
+            }
+        });
+
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Initial setup
+        initColumns();
+        loadBatch(); // Load batch pertama
+        initialLoader.classList.add('hidden');
+
+        // Setup IntersectionObserver untuk infinite scroll
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !loading) {
+                loadBatch();
+            }
+        }, {
+            root: null,
+            threshold: 0,
+            rootMargin: '300px'
+        });
+
+        observer.observe(infiniteLoader);
+
+        // Resize handler
         let resizeTimer;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(renderGallery, 250);
+            resizeTimer = setTimeout(rebalanceOnResize, 300);
         });
     </script>
 </body>
