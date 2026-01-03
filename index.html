@@ -145,6 +145,11 @@
         .category-dropdown {
             position: relative;
         }
+        
+        /* Dropdown batch size */
+        .batch-dropdown {
+            position: relative;
+        }
 
         .dropdown-menu {
             position: absolute;
@@ -652,6 +657,66 @@
             </h1>
             <div class="flex flex-wrap justify-end items-center gap-3 sm:gap-4 w-full sm:w-auto">
                 <div class="flex items-center gap-2 sm:gap-4 flex-1 sm:flex-none justify-end">
+                    <!-- PERUBAHAN: Dropdown untuk Batch Size -->
+                    <div class="batch-dropdown w-full sm:w-40">
+                        <button id="batch-toggle" class="w-full flex justify-between items-center px-4 py-2.5 glass-button rounded-xl text-sm font-medium transition-all duration-300">
+                            <span id="batch-selected" class="flex items-center gap-2.5">
+                                <i class="fas fa-layer-group text-green-600 dark:text-green-400 text-sm"></i>
+                                <span class="font-semibold">30 Images</span>
+                            </span>
+                            <i class="fas fa-chevron-down ml-2 text-xs transition-all duration-300"></i>
+                        </button>
+                        
+                        <div id="batch-dropdown" class="dropdown-menu w-full">
+                            <div class="dropdown-header flex items-center gap-2.5">
+                                <i class="fas fa-sliders-h text-green-500"></i>
+                                <span>Batch Size</span>
+                            </div>
+                            <div class="max-h-64 overflow-y-auto py-1">
+                                <button class="dropdown-item active" data-value="30">
+                                    <i class="fas fa-image text-green-500"></i>
+                                    <span>30 Images</span>
+                                </button>
+                                <button class="dropdown-item" data-value="40">
+                                    <i class="fas fa-images text-green-500"></i>
+                                    <span>40 Images</span>
+                                </button>
+                                <button class="dropdown-item" data-value="50">
+                                    <i class="fas fa-images text-green-500"></i>
+                                    <span>50 Images</span>
+                                </button>
+                                <button class="dropdown-item" data-value="60">
+                                    <i class="fas fa-images text-green-500"></i>
+                                    <span>60 Images</span>
+                                </button>
+                                <button class="dropdown-item" data-value="70">
+                                    <i class="fas fa-images text-green-500"></i>
+                                    <span>70 Images</span>
+                                </button>
+                                <button class="dropdown-item" data-value="80">
+                                    <i class="fas fa-images text-green-500"></i>
+                                    <span>80 Images</span>
+                                </button>
+                                <button class="dropdown-item" data-value="90">
+                                    <i class="fas fa-images text-green-500"></i>
+                                    <span>90 Images</span>
+                                </button>
+                                <button class="dropdown-item" data-value="100">
+                                    <i class="fas fa-images text-green-500"></i>
+                                    <span>100 Images</span>
+                                </button>
+                                <button class="dropdown-item" data-value="110">
+                                    <i class="fas fa-images text-green-500"></i>
+                                    <span>110 Images</span>
+                                </button>
+                                <button class="dropdown-item" data-value="120">
+                                    <i class="fas fa-images text-green-500"></i>
+                                    <span>120 Images</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Custom Category Dropdown -->
                     <div class="category-dropdown w-full sm:w-52">
                         <button id="category-toggle" class="w-full flex justify-between items-center px-4 py-2.5 glass-button rounded-xl text-sm font-medium transition-all duration-300">
@@ -878,7 +943,13 @@
         const categoryToggle = document.getElementById('category-toggle');
         const categoryDropdown = document.getElementById('category-dropdown');
         const categorySelected = document.getElementById('category-selected');
-        const dropdownItems = document.querySelectorAll('.dropdown-item');
+        const dropdownItems = document.querySelectorAll('#category-dropdown .dropdown-item');
+        
+        // Batch dropdown elements
+        const batchToggle = document.getElementById('batch-toggle');
+        const batchDropdown = document.getElementById('batch-dropdown');
+        const batchSelected = document.getElementById('batch-selected');
+        const batchItems = document.querySelectorAll('#batch-dropdown .dropdown-item');
 
         // Modal elements
         const imageModal = document.getElementById('image-modal');
@@ -891,7 +962,6 @@
         const modalLoading = document.getElementById('modal-loading');
         const modalDownload = document.getElementById('modal-download');
 
-        const BATCH_SIZE = 30;
         const FALLBACK_IMAGE = 'https://i.waifu.pics/Weau1RP.jpg';
         const MAX_EXCLUDE = 1000; // Batas exclude untuk many endpoint agar tidak terlalu besar
 
@@ -905,7 +975,9 @@
         let loading = false;
         let currentMode = 'sfw'; // Hanya SFW saja
         let currentCategory = 'waifu';
-        let isDropdownOpen = false;
+        let currentBatchSize = 30; // Default batch size
+        let isCategoryDropdownOpen = false;
+        let isBatchDropdownOpen = false;
         
         // Modal state
         let currentImageIndex = -1;
@@ -916,21 +988,49 @@
         let themeMoonIcon = null;
 
         // Custom dropdown functionality
-        function toggleDropdown() {
-            isDropdownOpen = !isDropdownOpen;
-            categoryDropdown.classList.toggle('open', isDropdownOpen);
+        function toggleCategoryDropdown() {
+            isCategoryDropdownOpen = !isCategoryDropdownOpen;
+            categoryDropdown.classList.toggle('open', isCategoryDropdownOpen);
             
             // Rotate arrow icon
             const arrow = categoryToggle.querySelector('.fa-chevron-down');
-            arrow.style.transform = isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+            arrow.style.transform = isCategoryDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+            
+            // Close batch dropdown if open
+            if (isBatchDropdownOpen) {
+                closeBatchDropdown();
+            }
         }
 
-        function closeDropdown() {
-            isDropdownOpen = false;
+        function closeCategoryDropdown() {
+            isCategoryDropdownOpen = false;
             categoryDropdown.classList.remove('open');
             
             // Rotate arrow icon back
             const arrow = categoryToggle.querySelector('.fa-chevron-down');
+            arrow.style.transform = 'rotate(0deg)';
+        }
+
+        function toggleBatchDropdown() {
+            isBatchDropdownOpen = !isBatchDropdownOpen;
+            batchDropdown.classList.toggle('open', isBatchDropdownOpen);
+            
+            // Rotate arrow icon
+            const arrow = batchToggle.querySelector('.fa-chevron-down');
+            arrow.style.transform = isBatchDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+            
+            // Close category dropdown if open
+            if (isCategoryDropdownOpen) {
+                closeCategoryDropdown();
+            }
+        }
+
+        function closeBatchDropdown() {
+            isBatchDropdownOpen = false;
+            batchDropdown.classList.remove('open');
+            
+            // Rotate arrow icon back
+            const arrow = batchToggle.querySelector('.fa-chevron-down');
             arrow.style.transform = 'rotate(0deg)';
         }
 
@@ -947,7 +1047,7 @@
                 }
             });
             
-            closeDropdown();
+            closeCategoryDropdown();
             resetGrid();
             // Tampilkan loader untuk initial load
             initialLoader.classList.remove('hidden');
@@ -955,10 +1055,37 @@
             loadBatch();
         }
 
-        // Event listeners for custom dropdown
+        function selectBatchSize(value, text) {
+            currentBatchSize = parseInt(value);
+            batchSelected.innerHTML = `<i class="fas fa-layer-group text-green-600 dark:text-green-400 text-sm"></i><span class="font-semibold">${value} Images</span>`;
+            
+            // Update active state in dropdown
+            batchItems.forEach(item => {
+                if (item.dataset.value === value) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+            
+            closeBatchDropdown();
+            
+            // Reset grid dan load ulang dengan batch size baru
+            resetGrid();
+            initialLoader.classList.remove('hidden');
+            progressText.textContent = '0%';
+            loadBatch();
+        }
+
+        // Event listeners for custom dropdowns
         categoryToggle.addEventListener('click', (e) => {
             e.stopPropagation();
-            toggleDropdown();
+            toggleCategoryDropdown();
+        });
+
+        batchToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleBatchDropdown();
         });
 
         dropdownItems.forEach(item => {
@@ -969,17 +1096,33 @@
             });
         });
 
-        // Close dropdown when clicking outside
+        batchItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const value = item.dataset.value;
+                const text = item.querySelector('span').textContent;
+                selectBatchSize(value, text);
+            });
+        });
+
+        // Close dropdowns when clicking outside
         document.addEventListener('click', (e) => {
             if (!categoryToggle.contains(e.target) && !categoryDropdown.contains(e.target)) {
-                closeDropdown();
+                closeCategoryDropdown();
+            }
+            if (!batchToggle.contains(e.target) && !batchDropdown.contains(e.target)) {
+                closeBatchDropdown();
             }
         });
 
-        // Close dropdown on escape key
+        // Close dropdowns on escape key
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && isDropdownOpen) {
-                closeDropdown();
+            if (e.key === 'Escape') {
+                if (isCategoryDropdownOpen) {
+                    closeCategoryDropdown();
+                }
+                if (isBatchDropdownOpen) {
+                    closeBatchDropdown();
+                }
             }
         });
 
@@ -1080,7 +1223,7 @@
 
             const columnWidth = getCurrentColumnWidth();
 
-            // Gunakan /many endpoint untuk performa optimal (30 gambar sekaligus)
+            // Gunakan /many endpoint untuk performa optimal (batch size gambar sekaligus)
             const manyEndpoint = `https://api.waifu.pics/many/${currentMode}/${currentCategory}`;
 
             let urls = [];
@@ -1100,9 +1243,9 @@
                 console.warn('Many endpoint failed, falling back to single fetches');
             }
 
-            // Jika many gagal atau kurang dari batch, fallback ke single fetch satu per satu (dengan paralelisme terbatas)
-            if (urls.length < BATCH_SIZE) {
-                const remaining = BATCH_SIZE - urls.length;
+            // Jika many gagal atau kurang dari batch size, fallback ke single fetch satu per satu (dengan paralelisme terbatas)
+            if (urls.length < currentBatchSize) {
+                const remaining = currentBatchSize - urls.length;
                 const singlePromises = [];
                 for (let i = 0; i < remaining; i++) {
                     singlePromises.push(
@@ -1407,6 +1550,7 @@
         
         // Set kategori default dan load batch pertama
         selectCategory('waifu', 'Waifu');
+        // Batch size sudah default 30
 
         // Setup IntersectionObserver untuk infinite scroll
         const observer = new IntersectionObserver((entries) => {
