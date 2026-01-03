@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WaifuMasonry - Image Gallery</title>
+    <title>AnimeGallery - Image Gallery</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tambahkan LordIcon -->
+    <script src="https://cdn.lordicon.com/lordicon.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -388,11 +390,13 @@
             background: linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(139, 92, 246, 0.9));
             color: white;
             border: none;
-            border-radius: 0.75rem;
-            padding: 0.75rem 1.25rem;
+            border-radius: 50%;
+            width: 3.25rem;
+            height: 3.25rem;
+            padding: 0;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            justify-content: center;
             cursor: pointer;
             font-size: 0.875rem;
             font-weight: 600;
@@ -403,9 +407,17 @@
             box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
         }
 
+        .modal-download span {
+            display: none;
+        }
+
+        .modal-download i {
+            font-size: 1.25rem;
+        }
+
         .modal-download:hover {
             background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(124, 58, 237, 0.9));
-            transform: translateY(-2px);
+            transform: translateY(-2px) scale(1.05);
             box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
         }
 
@@ -435,15 +447,118 @@
             border-color: rgba(255, 255, 255, 0.25);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
         }
+        
+        /* PERUBAHAN: Tombol back-to-top menjadi bulat sempurna */
+        #back-to-top {
+            border-radius: 50%;
+            width: 3.5rem;
+            height: 3.5rem;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* PERUBAHAN: Tombol theme toggle menjadi bulat sempurna */
+        #theme-toggle {
+            border-radius: 50%;
+            width: 3rem;
+            height: 3rem;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #theme-toggle span {
+            display: none;
+        }
+        
+        /* PERUBAHAN: Media query untuk tampilan desktop agar tombol theme toggle tetap memiliki teks */
+        @media (min-width: 640px) {
+            #theme-toggle {
+                border-radius: 9999px;
+                width: auto;
+                height: auto;
+                padding: 0.625rem 1rem;
+            }
+            
+            #theme-toggle span {
+                display: inline;
+            }
+        }
+        
+        /* PERUBAHAN: Tombol preview di tengah gambar - UKURAN DIPERKECIL */
+        .preview-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .grid-item:hover .preview-overlay {
+            opacity: 1;
+        }
+        
+        .preview-icon-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            border-radius: 50%;
+            padding: 0.4rem;
+            transition: all 0.3s ease;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .grid-item:hover .preview-icon-container {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        /* PERUBAHAN: Ukuran LordIcon yang lebih kecil */
+        .preview-icon-container lord-icon {
+            width: 24px !important;
+            height: 24px !important;
+        }
+        
+        /* PERUBAHAN: Styling untuk logo di header */
+        .header-logo {
+            width: 32px;
+            height: 32px;
+        }
+        
+        @media (min-width: 640px) {
+            .header-logo {
+                width: 36px;
+                height: 36px;
+            }
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300">
 
     <header class="glass-navbar sticky top-0 z-20 py-4 px-4 sm:px-6 mb-8 transition-all duration-300">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
+            <!-- PERUBAHAN: Judul dan icon diganti menjadi AnimeGallery dengan LordIcon -->
             <h1 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white whitespace-nowrap flex items-center gap-2">
-                <i class="fas fa-images text-blue-600 dark:text-blue-400"></i>
-                <span>Waifu<span class="text-blue-600 dark:text-blue-400">Masonry</span></span>
+                <lord-icon
+                    src="https://cdn.lordicon.com/czcsywgo.json"
+                    trigger="morph"
+                    state="morph-sea"
+                    colors="primary:#3b82f6,secondary:#8b5cf6"
+                    class="header-logo"
+                >
+                </lord-icon>
+                <span>Anime<span class="text-blue-600 dark:text-blue-400">Gallery</span></span>
             </h1>
             <div class="flex flex-wrap justify-end items-center gap-3 sm:gap-4 w-full sm:w-auto">
                 <div class="flex items-center gap-2 sm:gap-4 flex-1 sm:flex-none justify-end">
@@ -591,7 +706,8 @@
                         </div>
                     </div>
                     
-                    <button id="theme-toggle" class="px-4 py-2.5 glass-button rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-2.5">
+                    <!-- PERUBAHAN: Tombol theme toggle -->
+                    <button id="theme-toggle" class="glass-button rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-2.5">
                         <i id="theme-icon" class="fas fa-moon text-blue-600 dark:text-yellow-400 text-sm"></i>
                         <span id="theme-text" class="font-semibold">Dark Mode</span>
                     </button>
@@ -616,9 +732,9 @@
         </div>
     </main>
 
-    <!-- Back to Top Button -->
-    <button id="back-to-top" class="fixed bottom-8 right-8 z-30 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full p-4 shadow-lg opacity-0 pointer-events-none transition-all duration-300">
-        <i class="fas fa-arrow-up text-white"></i>
+    <!-- PERUBAHAN: Back to Top Button - menjadi bulat sempurna -->
+    <button id="back-to-top" class="fixed bottom-8 right-8 z-30 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg opacity-0 pointer-events-none transition-all duration-300">
+        <i class="fas fa-arrow-up text-white text-lg"></i>
     </button>
 
     <!-- Image Preview Modal -->
@@ -647,7 +763,8 @@
                 <div class="modal-category" id="modal-category"></div>
             </div>
             
-            <a id="modal-download" class="modal-download" href="#" target="_blank" download>
+            <!-- PERUBAHAN: Tombol download di modal - menjadi bulat sempurna -->
+            <a id="modal-download" class="modal-download" href="#" target="_blank" download title="Download Image">
                 <i class="fas fa-download"></i>
                 <span>Download</span>
             </a>
@@ -824,9 +941,15 @@
                                 <span>${currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} #${index}</span>
                             </p>
                         </div>
-                        <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <div class="bg-black/60 text-white rounded-full p-2 backdrop-blur-sm">
-                                <i class="fas fa-expand-arrows-alt text-xs"></i>
+                        <!-- PERUBAHAN: Tombol preview menggunakan LordIcon di tengah - UKURAN DIPERKECIL -->
+                        <div class="preview-overlay">
+                            <div class="preview-icon-container">
+                                <lord-icon
+                                    src="https://cdn.lordicon.com/vgxjrbxm.json"
+                                    trigger="hover"
+                                    colors="primary:#ffffff,secondary:#ffffff"
+                                    style="width:24px;height:24px">
+                                </lord-icon>
                             </div>
                         </div>
                     </div>
