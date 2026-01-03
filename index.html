@@ -459,7 +459,7 @@
             justify-content: center;
         }
         
-        /* PERUBAHAN: Tombol theme toggle menjadi bulat sempurna */
+        /* PERUBAHAN: Tombol theme toggle menjadi bulat sempurna tanpa teks */
         #theme-toggle {
             border-radius: 50%;
             width: 3rem;
@@ -468,24 +468,32 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+            overflow: hidden;
         }
         
         #theme-toggle span {
             display: none;
         }
         
-        /* PERUBAHAN: Media query untuk tampilan desktop agar tombol theme toggle tetap memiliki teks */
-        @media (min-width: 640px) {
-            #theme-toggle {
-                border-radius: 9999px;
-                width: auto;
-                height: auto;
-                padding: 0.625rem 1rem;
-            }
-            
-            #theme-toggle span {
-                display: inline;
-            }
+        /* LordIcon container styling */
+        .theme-icon-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* LordIcon styling - ukuran lebih kecil dari tombol */
+        #theme-toggle lord-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 22px !important;
+            height: 22px !important;
         }
         
         /* PERUBAHAN: Tombol preview di tengah gambar - UKURAN DIPERKECIL */
@@ -706,10 +714,29 @@
                         </div>
                     </div>
                     
-                    <!-- PERUBAHAN: Tombol theme toggle -->
-                    <button id="theme-toggle" class="glass-button rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap flex items-center gap-2.5">
-                        <i id="theme-icon" class="fas fa-moon text-blue-600 dark:text-yellow-400 text-sm"></i>
-                        <span id="theme-text" class="font-semibold">Dark Mode</span>
+                    <!-- PERUBAHAN: Tombol theme toggle yang baru - bulat tanpa teks dengan LordIcon animasi -->
+                    <button id="theme-toggle" class="glass-button rounded-full flex items-center justify-center p-0 w-12 h-12">
+                        <div class="theme-icon-container">
+                            <!-- Sun icon (Light Mode) - hanya ditampilkan saat mode light -->
+                            <lord-icon
+                                id="sun-icon"
+                                src="https://cdn.lordicon.com/hhmetsna.json"
+                                trigger="in"
+                                delay="1500"
+                                state="in-reveal"
+                                colors="primary:#3b82f6,secondary:#8b5cf6"
+                                style="display: none;">
+                            </lord-icon>
+                            
+                            <!-- Moon icon (Dark Mode) - hanya ditampilkan saat mode dark -->
+                            <lord-icon
+                                id="moon-icon"
+                                src="https://cdn.lordicon.com/lyxnguso.json"
+                                trigger="hover"
+                                colors="primary:#3b82f6,secondary:#8b5cf6"
+                                style="display: none;">
+                            </lord-icon>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -780,8 +807,10 @@
         const infiniteProgress = document.getElementById('infinite-progress');
         const backToTop = document.getElementById('back-to-top');
         const themeToggle = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
-        const themeText = document.getElementById('theme-text');
+        
+        // Theme toggle icons
+        const sunIcon = document.getElementById('sun-icon');
+        const moonIcon = document.getElementById('moon-icon');
         
         // Custom dropdown elements
         const categoryToggle = document.getElementById('category-toggle');
@@ -1214,14 +1243,24 @@
             }
         });
 
-        // Theme Toggle
+        // Theme Toggle - Update dengan LordIcon
         function updateThemeButton(isDark) {
             if (isDark) {
-                themeIcon.className = 'fas fa-sun text-yellow-400 text-sm';
-                themeText.textContent = 'Light Mode';
+                // Mode Dark: Tampilkan sun icon, sembunyikan moon icon
+                moonIcon.style.display = 'none';
+                sunIcon.style.display = 'block';
+                
+                // Aktifkan animasi untuk sun icon
+                sunIcon.setAttribute('trigger', 'in');
+                sunIcon.setAttribute('delay', '1500');
+                sunIcon.setAttribute('state', 'in-reveal');
             } else {
-                themeIcon.className = 'fas fa-moon text-blue-600 text-sm';
-                themeText.textContent = 'Dark Mode';
+                // Mode Light: Tampilkan moon icon, sembunyikan sun icon
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+                
+                // Aktifkan animasi hover untuk moon icon
+                moonIcon.setAttribute('trigger', 'hover');
             }
         }
 
