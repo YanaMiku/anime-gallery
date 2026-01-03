@@ -459,7 +459,7 @@
             justify-content: center;
         }
         
-        /* PERUBAHAN: Tombol theme toggle menjadi bulat sempurna tanpa teks */
+        /* PERUBAHAN: Tombol theme toggle menjadi bulat sempurna TANPA TEKS di semua ukuran */
         #theme-toggle {
             border-radius: 50%;
             width: 3rem;
@@ -468,32 +468,20 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
-            overflow: hidden;
         }
         
-        #theme-toggle span {
-            display: none;
-        }
-        
-        /* LordIcon container styling */
-        .theme-icon-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
+        /* Theme icon container */
+        #theme-icon-container {
             display: flex;
             align-items: center;
             justify-content: center;
+            width: 100%;
+            height: 100%;
         }
         
-        /* LordIcon styling - ukuran lebih kecil dari tombol */
-        #theme-toggle lord-icon {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 22px !important;
-            height: 22px !important;
+        #theme-icon-container lord-icon {
+            width: 24px !important;
+            height: 24px !important;
         }
         
         /* PERUBAHAN: Tombol preview di tengah gambar - UKURAN DIPERKECIL */
@@ -556,12 +544,12 @@
 
     <header class="glass-navbar sticky top-0 z-20 py-4 px-4 sm:px-6 mb-8 transition-all duration-300">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
-            <!-- PERUBAHAN: Judul dan icon diganti menjadi AnimeGallery dengan LordIcon -->
+            <!-- PERUBAHAN: Logo AnimeGallery dengan animasi looping terus-menerus -->
             <h1 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white whitespace-nowrap flex items-center gap-2">
                 <lord-icon
                     src="https://cdn.lordicon.com/czcsywgo.json"
-                    trigger="morph"
-                    state="morph-sea"
+                    trigger="loop"
+                    delay="2000"
                     colors="primary:#3b82f6,secondary:#8b5cf6"
                     class="header-logo"
                 >
@@ -714,28 +702,10 @@
                         </div>
                     </div>
                     
-                    <!-- PERUBAHAN: Tombol theme toggle yang baru - bulat tanpa teks dengan LordIcon animasi -->
-                    <button id="theme-toggle" class="glass-button rounded-full flex items-center justify-center p-0 w-12 h-12">
-                        <div class="theme-icon-container">
-                            <!-- Sun icon (Light Mode) - hanya ditampilkan saat mode light -->
-                            <lord-icon
-                                id="sun-icon"
-                                src="https://cdn.lordicon.com/hhmetsna.json"
-                                trigger="in"
-                                delay="1500"
-                                state="in-reveal"
-                                colors="primary:#3b82f6,secondary:#8b5cf6"
-                                style="display: none;">
-                            </lord-icon>
-                            
-                            <!-- Moon icon (Dark Mode) - hanya ditampilkan saat mode dark -->
-                            <lord-icon
-                                id="moon-icon"
-                                src="https://cdn.lordicon.com/lyxnguso.json"
-                                trigger="hover"
-                                colors="primary:#3b82f6,secondary:#8b5cf6"
-                                style="display: none;">
-                            </lord-icon>
+                    <!-- PERUBAHAN: Tombol theme toggle dengan LordIcon animasi -->
+                    <button id="theme-toggle" class="glass-button rounded-full w-12 h-12 flex items-center justify-center p-0">
+                        <div id="theme-icon-container">
+                            <!-- Icon akan dimuat oleh JavaScript berdasarkan tema -->
                         </div>
                     </button>
                 </div>
@@ -807,10 +777,7 @@
         const infiniteProgress = document.getElementById('infinite-progress');
         const backToTop = document.getElementById('back-to-top');
         const themeToggle = document.getElementById('theme-toggle');
-        
-        // Theme toggle icons
-        const sunIcon = document.getElementById('sun-icon');
-        const moonIcon = document.getElementById('moon-icon');
+        const themeIconContainer = document.getElementById('theme-icon-container');
         
         // Custom dropdown elements
         const categoryToggle = document.getElementById('category-toggle');
@@ -848,6 +815,10 @@
         // Modal state
         let currentImageIndex = -1;
         let currentImages = []; // Store all image URLs for navigation
+        
+        // Theme icon elements
+        let themeSunIcon = null;
+        let themeMoonIcon = null;
 
         // Custom dropdown functionality
         function toggleDropdown() {
@@ -1204,6 +1175,83 @@
             }
         }
 
+        // Theme toggle functions with LordIcon
+        function createThemeIcons() {
+            // Create sun icon
+            themeSunIcon = document.createElement('lord-icon');
+            themeSunIcon.setAttribute('src', 'https://cdn.lordicon.com/hhmetsna.json');
+            themeSunIcon.setAttribute('trigger', 'in');
+            themeSunIcon.setAttribute('delay', '1500');
+            themeSunIcon.setAttribute('state', 'in-reveal');
+            themeSunIcon.style.width = '24px';
+            themeSunIcon.style.height = '24px';
+            
+            // Create moon icon
+            themeMoonIcon = document.createElement('lord-icon');
+            themeMoonIcon.setAttribute('src', 'https://cdn.lordicon.com/lyxnguso.json');
+            themeMoonIcon.setAttribute('trigger', 'in');
+            themeMoonIcon.setAttribute('delay', '1500');
+            themeMoonIcon.setAttribute('state', 'in-reveal');
+            themeMoonIcon.style.width = '24px';
+            themeMoonIcon.style.height = '24px';
+            
+            // Clear container and add appropriate icon
+            themeIconContainer.innerHTML = '';
+            if (document.documentElement.classList.contains('dark')) {
+                themeIconContainer.appendChild(themeMoonIcon);
+            } else {
+                themeIconContainer.appendChild(themeSunIcon);
+            }
+        }
+
+        function updateTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            
+            // Update theme icons
+            themeIconContainer.innerHTML = '';
+            if (isDark) {
+                themeIconContainer.appendChild(themeMoonIcon);
+                // Play moon animation
+                if (themeMoonIcon) {
+                    themeMoonIcon.playTrigger();
+                }
+            } else {
+                themeIconContainer.appendChild(themeSunIcon);
+                // Play sun animation
+                if (themeSunIcon) {
+                    themeSunIcon.playTrigger();
+                }
+            }
+        }
+
+        // Initialize theme
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const isDark = savedTheme === 'dark' || (savedTheme === null && prefersDark);
+
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            }
+            
+            createThemeIcons();
+            
+            // Play initial animation
+            if (isDark && themeMoonIcon) {
+                setTimeout(() => {
+                    themeMoonIcon.playTrigger();
+                }, 100);
+            } else if (!isDark && themeSunIcon) {
+                setTimeout(() => {
+                    themeSunIcon.playTrigger();
+                }, 100);
+            }
+        }
+
+        // Theme toggle event listener
+        themeToggle.addEventListener('click', updateTheme);
+
         // Modal event listeners
         modalClose.addEventListener('click', closeModal);
         
@@ -1243,42 +1291,6 @@
             }
         });
 
-        // Theme Toggle - Update dengan LordIcon
-        function updateThemeButton(isDark) {
-            if (isDark) {
-                // Mode Dark: Tampilkan sun icon, sembunyikan moon icon
-                moonIcon.style.display = 'none';
-                sunIcon.style.display = 'block';
-                
-                // Aktifkan animasi untuk sun icon
-                sunIcon.setAttribute('trigger', 'in');
-                sunIcon.setAttribute('delay', '1500');
-                sunIcon.setAttribute('state', 'in-reveal');
-            } else {
-                // Mode Light: Tampilkan moon icon, sembunyikan sun icon
-                sunIcon.style.display = 'none';
-                moonIcon.style.display = 'block';
-                
-                // Aktifkan animasi hover untuk moon icon
-                moonIcon.setAttribute('trigger', 'hover');
-            }
-        }
-
-        themeToggle.addEventListener('click', () => {
-            const isDark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            updateThemeButton(isDark);
-        });
-
-        const savedTheme = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const isDark = savedTheme === 'dark' || (savedTheme === null && prefersDark);
-
-        if (isDark) {
-            document.documentElement.classList.add('dark');
-        }
-        updateThemeButton(isDark);
-
         // Back to Top Button
         window.addEventListener('scroll', () => {
             if (window.scrollY > 400) {
@@ -1295,8 +1307,11 @@
         });
 
         // Initial setup
+        initTheme();
         initColumns();
-        loadBatch(); // Load batch pertama
+        
+        // Set kategori default dan load batch pertama
+        selectCategory('waifu', 'Waifu');
 
         // Setup IntersectionObserver untuk infinite scroll
         const observer = new IntersectionObserver((entries) => {
