@@ -1386,12 +1386,12 @@
                                 <span>${currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} #${index}</span>
                             </p>
                         </div>
-                        <!-- PERUBAHAN: Tombol preview menggunakan LordIcon di tengah - UKURAN DIPERKECIL -->
+                        <!-- PERUBAHAN: Tombol preview menggunakan LordIcon di tengah - UKURAN DIPERKECIL DENGAN ANIMASI LOOPING -->
                         <div class="preview-overlay">
                             <div class="preview-icon-container">
                                 <lord-icon
                                     src="https://cdn.lordicon.com/vgxjrbxm.json"
-                                    trigger="hover"
+                                    trigger="loop"
                                     colors="primary:#ffffff,secondary:#ffffff"
                                     style="width:24px;height:24px">
                                 </lord-icon>
@@ -1405,6 +1405,33 @@
             wrapper.addEventListener('click', () => {
                 openModal(index - 1, imageUrl);
             });
+            
+            // PERUBAHAN: Kontrol animasi LordIcon saat hover pada gambar
+            // Cari element LordIcon di dalam wrapper
+            const lordIconElement = wrapper.querySelector('lord-icon');
+            
+            if (lordIconElement) {
+                // Saat mouse masuk ke gambar, mainkan animasi
+                wrapper.addEventListener('mouseenter', () => {
+                    if (lordIconElement.playTrigger) {
+                        lordIconElement.playTrigger();
+                    }
+                });
+                
+                // Saat mouse keluar dari gambar, hentikan animasi
+                wrapper.addEventListener('mouseleave', () => {
+                    if (lordIconElement.pauseTrigger) {
+                        lordIconElement.pauseTrigger();
+                    }
+                });
+                
+                // Inisialisasi: pause animasi saat pertama kali dimuat
+                setTimeout(() => {
+                    if (lordIconElement.pauseTrigger) {
+                        lordIconElement.pauseTrigger();
+                    }
+                }, 100);
+            }
             
             return wrapper;
         }
